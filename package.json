@@ -1,0 +1,47 @@
+{
+  "name": "@baizey/dependency-injection",
+  "version": "1.0.0",
+  "description": "A simple typescript dependency injection",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Baizey/ts-dependency-injection"
+  },
+  "main": "lib/index.js",
+  "files": [
+    "lib/**/*"
+  ],
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "test": "jest --coverage"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^18.15.7",
+    "@types/uuid": "^9.0.1",
+    "@types/jest": "^29.5.0",
+    "jest": "^29.5.0",
+    "ts-jest": "^29.0.5",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.0.2",
+    "uuid": "^9.0.0"
+  },
+  "keywords": [
+    "typescript",
+    "DI",
+    "Dependency injection",
+    "dependency",
+    "injection",
+    "IoC",
+    "Inversion of Control",
+    "Lifetime",
+    "Scoped",
+    "Singleton",
+    "Transient"
+  ],
+  "author": "Baizey",
+  "license": "GPL-2.0-only"
+}

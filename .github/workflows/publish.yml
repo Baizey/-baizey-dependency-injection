@@ -1,0 +1,40 @@
+name: Publish
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # Setup
+      - uses: actions/checkout@v3
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.13.0
+          token: ${{ github.token }}
+          registry-url: 'https://registry.npmjs.org'
+      - run: npm install
+      
+      # Test
+      - run: npm run test
+      - name: Code coverage
+        uses: codecov/codecov-action@v3
+
+      # CI
+      - name: Version bump
+        uses: phips28/gh-action-bump-version@v9.1.0
+        with:
+          target-branch: main
+          commit-message: auto version bump
+
+      # Build
+      - run: npm run build
+      
+      # Publish
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

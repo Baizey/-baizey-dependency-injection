@@ -1,0 +1,26 @@
+name: PR
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # Setup
+      - uses: actions/checkout@v3
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v3
+        with:
+          node-version: 17.9.0
+          token: ${{ github.token }}
+          registry-url: 'https://registry.npmjs.org'
+      - run: npm install
+
+      # Test
+      - run: npm run test
+
+      # Build
+      - run: npm run build
