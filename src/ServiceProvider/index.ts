@@ -1,3 +1,2 @@
-export * from './IServiceProvider'
 export * from './ServiceProvider'
-export * from './ScopedServiceProvider'
+export * from './ScopeContext'

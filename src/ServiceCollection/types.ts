@@ -1,19 +1,20 @@
 import { ILifetime } from '../Lifetime'
-import { ScopedServiceProvider } from '../ServiceProvider'
+import { ScopeContext, ServiceProvider } from '../ServiceProvider'
 
-export type Key<E> = keyof E & (string)
+export type Key<E> = keyof E & ( string )
 
 export type LifetimeConstructor<T = any, P = void, E = any> =
-	{ new( name: Key<E>, factory: DependencyFactory<T, P, E> ): ILifetime<T, E> }
+  { new( name: Key<E>, factory: DependencyFactory<T, P, E> ): ILifetime<T, E> }
 
 export type LifetimeCollection<E = any> = { [key in keyof E]: ILifetime<unknown, E> }
+
 export type MatchingProperties<T, E> = { [K in keyof E]: E[K] extends T ? K : never }[keyof E]
 export type SelectorOptions<T = any, E = any> = { [key in MatchingProperties<T, E>]: key & Key<E> }
-export type Selector<T, E> = Key<E> | (( e: SelectorOptions<T, E> ) => Key<E>)
+export type Selector<T, E> = Key<E> | ( ( e: SelectorOptions<T, E> ) => Key<E> )
 
 export type Stateful<P, T> = { create( props: P ): T }
 
-export type DependencyFactory<T, P, E> = ( provider: E, props: P, scope: ScopedServiceProvider<E> ) => T
+export type DependencyFactory<T, P, E> = ( providable: E, props: P, provider: ServiceProvider<E>, context: ScopeContext<E> ) => T
 
 export type StatefulConstructor<T, P, E> = { new( provider: E, props: P ): T }
 

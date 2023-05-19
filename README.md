@@ -7,54 +7,66 @@ Simple type strong dependency injection
 ## Goals of this package
 
 - Minimal impact on how you write individual objects
-- Draw inspiration from .net core's dependency injection, but with a distinct ts/js flavour
+- Draw inspiration from .net core's dependency injection, but with a distinct ts/js flavor
 - Avoid decorators and other pre-processing magic as much as possible
 - Strong type checking
 
 ## Quick start
 
-```
-// Class with no dependencies
-class Alice { ... }
+The recommended structure for a class in the IoC flow is something like this:
 
-// Class with dependencies
-type BobDep = { alice: Alice, fixedName: string }
-class Bob {
-    ...
-    constructor({ alice }: BobDep){ ... }
+````
+// A.ts
+type ADep = BIoC & CIoC
+export class A {
+    constructor({b, c}: ADep)
 }
+export const aIoC = { a: singleton(A) } // lifetime is either singleton, scoped, transient or scoped
+export type AIoC = DependenciesOf<typeof AIoC> // turns { a: lifetime(A) } into { a: A }
+````
 
-// Stateful class
-type SomethingDep = { ... }
-type SomethingProps = { ... }
-class Something {
-    props: SomethingProps
-    bob: IBob
-    constructor(dependencies: SomethingDep, props: SomethingProps){ ... }
-}
+Note that the ``ADep`` and ``AIoC`` are convenience patterns to help typechecking and later refactoring
 
+Also note that any object-type is supported by
+doing ``singleton({factory: (provided, props, provider, context) => ... })`` instead of the shorthand for classes
 
-const services = Services() // or new ServiceCollection()
-  // Add multiple dependencies at ones
-  // This is required if you're adding 10+ dependencies, otherwise TS itself will struggle known whats provided
-  .add({
-    alice: singleton(Alice),
-    fixedName: singleton({ factory: () => 'text' }),
-  })
-  // Chain adding as required
-  .add({
-    bob: scoped(Bob),
-    somethingFactory: stateful(Something),
-  })
+````
+// IoC.ts
+const dependencies = { ...aIoC, ...bIoC, ...cIoC }
+export type Dependencies = DependenciesOf<typeof Dependencies>
+const services = new ServiceCollection(dependencies)
+const provider = services.build()
+export providerProxy: Dependencies = provider.proxy
+````
 
-// Building a provider is simple and each build will be completly independent of each other
-const provider = services.build();
+The ``providerProxy`` can then be used anywhere to provide any of the registered properties for ``AIoC``,``BIoC``,
+or ``CIoC``
 
-// All of these ways of providing instances are equivilent, note they are all type-strong so the ide can guide you
-const bob = provider.provide(p => p.bob)
-const alice = provider.provide('alice')
-const { alice, bob, somethingFactory } = provider.proxy
-```
+alternatively you can also use the provider itself the difference is primarily semantics that
+``const {a} = providerProxy`` vs ``const a = provider.provide('a')``
+
+# Performance
+
+A simple performance test has been done with the dependency structure:
+
+- A: no dependencies
+- B: depends on A
+- C: depends on B
+- D: depends on A, B and C
+
+All dependencies are set up to all uses the lifetime being tested
+
+Below is the average time it took to provide A or D over 1_000_000 provisions in nanoseconds
+
+A best showcases the expected performance per resolution,
+while D showcases how the different lifetime affect performance
+
+| Lifetime  | DI (A) (ns) | DI (D) (ns) | Raw JS (D) (ns) |
+|-----------|------------:|------------:|----------------:|
+| Singleton |           6 |          15 |               3 |
+| Scoped    |         230 |        1930 |               4 |
+| Transient |         227 |        3133 |               2 |
+| Stateful  |          70 |         109 |              17 |
 
 # API
 
@@ -97,39 +109,27 @@ type DependencyMap<E, F> = { [key in keyof F]: DependencyInformation<F[key], any
 
 ### Constructor
 
-- `new<E = {}>()`
-
-alternative: use `Services()` as a provided quick-create method
-
-### Add
-
-`add<KT, F extends DependencyMap<E, KT>>( dependencies: F & DependencyMap<E, KT> )`
-
-Generic `KT` and `F` is here to allow typescript to do magic, they should never be used manually
-
-Returns `ServiceCollection<E & KT>`
-
-Can throw
-
-- `DuplicateDependencyError` if the resolved name from `DependencyOptions` has already been added
+- `new<E>( dependencies: DependencyMap<E, E> )`
 
 ### Get
 
-- `get<T>(Selector<T, E>)`
+- `get<T>( Selector<T, E> )`
 
 returns `ILifetime<T, E> | undefined`
 
-### Remove
+### Replace
 
-- `remove<T, K>(Selector<T, E>)`
+- `replace( dependencies: DependencyMap<E, E> )`
 
-returns `ServiceCollection<Omit<E, K>>`
+returns `ServiceCollection<E>`
+
+note that this does not create a new collection, it alters the existing one
 
 ### Build
 
 - `build()`
 
-returns `IServiceProvider<T, E>`
+returns `ServiceProvider<E>`
 
 ### BuildMock
 
@@ -143,11 +143,11 @@ Note if you give a `MockStrategy` as first argument is as if you only gave `defa
 
 - `buildMock(mock: MockStrategy | ProviderMock<E> = {}, defaultMockType?: MockStrategy)`
 
-returns `IServiceProvider<T, E>`
+returns `ServiceProvider<E>`
 
 #### Types involved
 
-This wont be easily understandable, but it describes all the possibilities for mocking
+This won't be easily understandable, but it describes all the possibilities for mocking
 
 ````
 type PartialNested<T> = { [key in keyof T]?: T[key] extends object ? PartialNested<T[key]> : T[key] }
@@ -161,10 +161,11 @@ enum MockStrategy {
   dummyStub = 'dummyStub', // All getter/setter works, but default value is null
   nullStub = 'nullStub', // All setters are ignored, and getters return null
   exceptionStub = 'exceptionStub', // All getters and setters throw exception
+  realStub = 'realStub', // Provides everything as-if it wasn't mocked
 }
 ````
 
-## IServiceProvider<E>
+## ServiceProvider<E>
 
 ### Proxy
 

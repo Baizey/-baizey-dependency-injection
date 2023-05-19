@@ -1,22 +1,22 @@
 import { Access, ShouldBeMockedDependencyError } from '../Errors'
 import { ILifetime } from '../Lifetime'
-import { ScopedServiceProvider } from '../ServiceProvider'
 import { propertyOf } from '../utils'
 import { ServiceCollection } from './ServiceCollection'
 import { DependencyFactory, Key } from './types'
+import { ScopeContext, ServiceProvider } from '../ServiceProvider'
 
 export enum MockStrategy {
   /**
    * ONLY HERE FOR DOCUMENTATION PURPOSES, DO NOT USE IN CODE
    *
-   * Default behaviour for any dependency/dependency property given in the ProviderMock that isn't a MockStrategy
-   * Getter usage will return most recent dummy value (either the initial value, or a later set value)
+   * Default behavior for any dependency/dependency property given in the ProviderMock that isn't a MockStrategy
+   * Getter usage will return the most recent dummy value (either the initial value, or a later set value)
    * Setter usage will set new dummy value
    */
   dummyStub = 'dummyStub',
 
   /**
-   * This is the default behaviour unless otherwise explicitly stated
+   * This is the default behavior unless otherwise explicitly stated
    *
    * Getter usage will return null
    * Setter usage will do nothing
@@ -73,16 +73,16 @@ export function proxyLifetime<E>(
   return new Proxy( lifetime, {
     get( target, prop: keyof ILifetime<unknown, E> ) {
       if ( prop !== provide ) return target[prop]
-      return ( context: ScopedServiceProvider<E> ) => {
-        if ( context.depth === 1 ) return target.provide( context )
+      return ( provider: ServiceProvider<E>, context: ScopeContext<E> ) => {
+        if ( context.depth === 1 ) return target.provide( provider, context )
 
-        const shadow = target.provide( context )
+        const shadow = target.provide( provider, context )
 
         switch ( typeof dependencyMock ) {
           case 'string':
             return mockDependency( name, shadow, {}, dependencyMock )
           case 'function':
-            return mockDependency( name, shadow, dependencyMock( context.proxy, undefined, context ), defaultMock )
+            return mockDependency( name, shadow, dependencyMock( provider.createProxy( name as Key<E>, context ), undefined, provider, context ), defaultMock )
           case 'object':
             return mockDependency( name, shadow, dependencyMock, defaultMock )
           default:

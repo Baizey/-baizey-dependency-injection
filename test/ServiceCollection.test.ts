@@ -1,11 +1,8 @@
 import {
-  DuplicateDependencyError,
   MockStrategy,
   propertyOf,
   scoped,
-  ScopedServiceProvider,
   ServiceCollection,
-  Services,
   ShouldBeMockedDependencyError,
   singleton,
   stateful,
@@ -15,99 +12,75 @@ import { ScopedLifetime } from '../src/Lifetime/ScopedLifetime'
 import { SingletonLifetime } from '../src/Lifetime/SingletonLifetime'
 import { StatefulLifetime } from '../src/Lifetime/StatefulLifetime'
 import { TransientLifetime } from '../src/Lifetime/TransientLifetime'
-import { Context, dummy, dummyClass, UUID } from './testUtils'
+import { dummy, dummyClass, UUID } from './testUtils'
 
 class Dummy {
 }
 
 const services = propertyOf<ServiceCollection>()
 
-describe( services.add, () => {
-  test( 'add', () => {
-    const sut = Services().add( { a: singleton( Dummy ) } )
-    expect( sut.get( 'a' ) ).toBeTruthy()
-  } )
-  test( 'addSingleton', () => {
-    const sut = Services()
-    const spy = jest.spyOn( sut, 'add' )
-    const actual = sut.add( { alice: singleton( Dummy ) } )
-    expect( spy ).toBeCalledTimes( 1 )
-    expect( actual.get( ( p ) => p.alice ) ).toBeInstanceOf( SingletonLifetime )
-  } )
-  test( 'addScoped', () => {
-    const sut = Services()
-    const spy = jest.spyOn( sut, 'add' )
-    const actual = sut.add( { alice: scoped( Dummy ) } )
-    expect( spy ).toBeCalledTimes( 1 )
-    expect( actual.get( ( p ) => p.alice ) ).toBeInstanceOf( ScopedLifetime )
-  } )
-  test( 'addTransient', () => {
-    const sut = Services()
-    const spy = jest.spyOn( sut, 'add' )
-    const actual = sut.add( { alice: transient( Dummy ) } )
-    expect( spy ).toBeCalledTimes( 1 )
-    expect( actual.get( ( p ) => p.alice ) ).toBeInstanceOf( TransientLifetime )
-  } )
-  test( 'addStateful', () => {
-    const sut = Services()
-    const spy = jest.spyOn( sut, 'add' )
-    const actual = sut.add( { alice: stateful( Dummy ) } )
-    expect( spy ).toBeCalledTimes( 1 )
-    expect( actual.get( ( p ) => p.alice ) ).toBeInstanceOf( StatefulLifetime )
-    expect( actual.get( 'alice' )?.provide( new ScopedServiceProvider( Context() ) ) ).toHaveProperty( 'create' )
-  } )
-  test( 'Adding twice should give duplicate error', () => {
-    const sut = Services().add( { a: singleton( Dummy ) } )
-    // @ts-ignore
-    expect( () => sut.add( { a: singleton( Dummy ) } ) ).toThrowError( new DuplicateDependencyError( 'a' ) )
+describe( 'constructor', () => {
+  const testData = [
+    [singleton, SingletonLifetime],
+    [scoped, ScopedLifetime],
+    [transient, TransientLifetime],
+    [stateful, StatefulLifetime],
+  ] as any[][]
+  testData.forEach( ( [lifetime, expected] ) => {
+    test( `add ${ lifetime.name }`, () => {
+      const sut = new ServiceCollection( { alice: lifetime( Dummy ) } )
+      expect( sut.get( p => p.alice ) ).toBeInstanceOf( expected )
+    } )
   } )
 } )
 
-describe( services.remove, () => {
-  test( 'Service is removed', () => {
-    const sut = Services().add( { a: singleton( Dummy ) } )
-    const actual = sut.remove( 'a' )
-    expect( actual.get( 'a' as any ) ).toBeUndefined()
-  } )
-  test( 'Service is removed and re-added', () => {
-    const sut = Services()
-      .add( { a: singleton( Dummy ) } )
-      .remove( 'a' )
-    const actual = sut.add( { a: singleton( Dummy ) } )
-    expect( actual.get( 'a' ) ).toBeTruthy()
+describe( services.replace, () => {
+  class Test {
+    run() {
+      return 'Hello'
+    }
+  }
+
+  class ValidReplaceTest {
+    run() {
+      return 'Goodbye'
+    }
+  }
+
+  test( 'it', () => {
+    const sut = new ServiceCollection( { a: singleton( Test ) } )
+      .replace( { a: singleton( ValidReplaceTest ) } )
+    expect( sut.build().proxy.a.run() ).toBe( new ValidReplaceTest().run() )
   } )
 } )
 
 describe( services.buildMock, () => {
   test( 'Default mock strategy should be followed', () => {
-    const { a, sut } = dummy()
-      .add( {
-        a: singleton( dummyClass() ),
-        sut: singleton( dummyClass( ( { a } ) => ( { a } ) ) ),
-      } )
+    const { sut, a } = dummy( {
+      a: singleton( dummyClass() ),
+      sut: singleton( dummyClass( ( { a } ) => ( { a } ) ) ),
+    } )
       .mock()
     expect( a.id ).toBeTruthy()
     expect( sut.a.id ).toBeNull()
   } )
 
   test( 'Given mock strategy should be followed', () => {
-    const { sut } = dummy()
-      .add( {
-        a: singleton( dummyClass() ),
-        sut: singleton( dummyClass( ( { a } ) => ( { a } ) ) ),
-      } )
+    const { sut } = dummy( {
+      a: singleton( dummyClass() ),
+      sut: singleton( dummyClass( ( { a } ) => ( { a } ) ) ),
+    } )
       .mock( {}, MockStrategy.exceptionStub )
     expect( () => sut.a.id ).toThrowError( new ShouldBeMockedDependencyError( 'a', 'id', 'get' ) )
   } )
 
   test( 'Dependency mock strategy should be followed', () => {
-    const { sut } = dummy()
-      .add( {
-        a: singleton( dummyClass() ),
-        b: singleton( dummyClass() ),
-        c: singleton( dummyClass() ),
-        sut: singleton( dummyClass( ( { a, b, c } ) => ( { a, b, c } ) ) ),
-      } )
+    const { sut } = dummy( {
+      a: singleton( dummyClass() ),
+      b: singleton( dummyClass() ),
+      c: singleton( dummyClass() ),
+      sut: singleton( dummyClass( ( { a, b, c } ) => ( { a, b, c } ) ) ),
+    } )
       .mock( {
         a: MockStrategy.dummyStub,
         b: MockStrategy.exceptionStub,
@@ -122,11 +95,10 @@ describe( services.buildMock, () => {
   } )
 
   test( 'Property mock strategy should be followed', () => {
-    const { sut } = dummy()
-      .add( {
-        a: singleton( dummyClass() ),
-        sut: singleton( dummyClass( ( { a } ) => ( { a } ) ) ),
-      } )
+    const { sut } = dummy( {
+      a: singleton( dummyClass() ),
+      sut: singleton( dummyClass( ( { a } ) => ( { a } ) ) ),
+    } )
       .mock( {
         a: {
           id: MockStrategy.nullStub,
@@ -142,11 +114,10 @@ describe( services.buildMock, () => {
   } )
 
   test( 'Stateful instance should be given mocked dependencies', () => {
-    const sut = dummy()
-      .add( {
-        scoped: scoped( dummyClass( ( { stateful } ) => ( { stateful } ) ) ),
-        stateful: stateful( dummyClass( ( { stateful, scoped } ) => ( { stateful, scoped } ) ) ),
-      } )
+    const sut = dummy( {
+      scoped: scoped( dummyClass( ( { stateful } ) => ( { stateful } ) ) ),
+      stateful: stateful( dummyClass( ( { stateful, scoped } ) => ( { stateful, scoped } ) ) ),
+    } )
       .mock( MockStrategy.exceptionStub ).stateful
     expect( () => sut.create().scoped.stateful ).toThrowError(
       new ShouldBeMockedDependencyError( 'scoped', 'stateful', 'get' ),
@@ -154,11 +125,10 @@ describe( services.buildMock, () => {
   } )
 
   test( 'Service with Stateful dependency should be given mocked Stateful', () => {
-    const sut = dummy()
-      .add( {
-        scoped: scoped( dummyClass( ( { stateful } ) => ( { stateful } ) ) ),
-        stateful: stateful( dummyClass( ( { stateful, scoped } ) => ( { stateful, scoped } ) ) ),
-      } )
+    const sut = dummy( {
+      scoped: scoped( dummyClass( ( { stateful } ) => ( { stateful } ) ) ),
+      stateful: stateful( dummyClass( ( { stateful, scoped } ) => ( { stateful, scoped } ) ) ),
+    } )
       .mock( MockStrategy.exceptionStub ).scoped
     expect( () => sut.stateful.create() ).toThrowError(
       new ShouldBeMockedDependencyError( 'stateful', 'create', 'function' ),
@@ -166,12 +136,11 @@ describe( services.buildMock, () => {
   } )
 
   test( 'Service with MockStrategy realValue should return the real deal', () => {
-    const sut = dummy()
-      .add( {
-        a: singleton( dummyClass( () => ( {} ) ) ),
-        b: singleton( dummyClass( () => ( {} ) ) ),
-        c: singleton( dummyClass( ( { a, b } ) => ( { a, b } ) ) ),
-      } )
+    const sut = dummy( {
+      a: singleton( dummyClass( () => ( {} ) ) ),
+      b: singleton( dummyClass( () => ( {} ) ) ),
+      c: singleton( dummyClass( ( { a, b } ) => ( { a, b } ) ) ),
+    } )
       .mock( {
         a: MockStrategy.realValue,
         b: MockStrategy.nullStub,
