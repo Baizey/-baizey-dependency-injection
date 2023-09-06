@@ -73,7 +73,7 @@ describe( 'benchmark', () => {
       },
     },
   ]
-  let a = false
+  let a = true
   if ( a )
     raw.forEach( ( { lifetime, raw } ) => {
       test( lifetime.name, () => {
@@ -84,8 +84,8 @@ describe( 'benchmark', () => {
           d: lifetime( D ),
         } ).build()
         const bestCase = raw()
-        const actualCase = benchmark( () => provider.provide( 'a' ) )
-        expect( actualCase ).toBeLessThanOrEqual( bestCase )
+        const actualCase = benchmark( () => provider.provide( 'd' ) )
+        expect( actualCase ).toBeLessThan( 0 )
       } )
     } )
   else test( 'placeholder', () => expect( true ).toBeTruthy() )
