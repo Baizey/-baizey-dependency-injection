@@ -7,6 +7,7 @@ describe( 'benchmark', () => {
     test( '', () => {
       expect( true ).toBeTruthy()
     } )
+    return;
   }
 
 
