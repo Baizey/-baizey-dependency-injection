@@ -3,13 +3,19 @@ import { TimeSpan } from 'sharp-time-span'
 
 describe( 'benchmark', () => {
   // Dont run outside of local
-  if (1 === 1) return;
+  if ( 1 === 1 ) {
+    test( '', () => {
+      expect( true ).toBeTruthy()
+    } )
+  }
+
 
   class A {
   }
 
   class B {
     private a: any
+
     constructor( { a }: any ) {
       this.a = a
     }
@@ -17,6 +23,7 @@ describe( 'benchmark', () => {
 
   class C {
     private b: any
+
     constructor( { b }: any ) {
       this.b = b
     }
