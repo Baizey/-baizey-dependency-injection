@@ -25,7 +25,7 @@ export class ServiceCollection<E = {}> {
     return this.lifetimes[extractSelector(selector)] as ILifetime<T, E>
   }
 
-  replace(dependencies: DependencyMap<E, E>): ServiceCollection<E> {
+  replace(dependencies: DependencyMap<Partial<E>, Partial<E>>): ServiceCollection<E> {
     Object.entries<DependencyInformation<unknown, any>>(dependencies).forEach(([name, data]) => {
       const factory = 'factory' in data
         ? data.factory
