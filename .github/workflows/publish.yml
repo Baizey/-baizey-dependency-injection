@@ -10,11 +10,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Setup
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Setup Node.js environment
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: 20.6.0
+          node-version: 22.3.0
           token: ${{ github.token }}
           registry-url: 'https://registry.npmjs.org'
       - run: npm install
@@ -22,11 +22,11 @@ jobs:
       # Test
       - run: npm run test
       - name: Code coverage
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
 
       # CI
       - name: Version bump
-        uses: phips28/gh-action-bump-version@v9.1.0
+        uses: phips28/gh-action-bump-version@v11.0.4
         with:
           target-branch: main
           commit-message: auto version bump
