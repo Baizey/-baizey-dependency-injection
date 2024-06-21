@@ -55,25 +55,18 @@ export function proxyLifetimes<E>(
 
   const provider = services.build()
 
-  const lifetimes: any[] = []
-
-  Object.values<ILifetime<unknown, E>>( provider.lifetimes ).forEach( ( lifetime ) => {
+  Object.values<ILifetime<unknown, E>>( provider.lifetimes ).map( ( lifetime ) => {
     const propertyMock = dependencyMock[lifetime.name] ?? defaultMock
-    if ( propertyMock !== MockStrategy.realValue )
-      lifetimes.push( proxyLifetime( lifetime, propertyMock, defaultMock ) )
+    if ( propertyMock === MockStrategy.realValue ) return { lifetime, mock: null }
+    return { lifetime, mock: proxyLifetime( lifetime, propertyMock, defaultMock ) }
+  } ).forEach( ( { lifetime, mock } ) => {
+    provider.lifetimes[lifetime.name] = mock ?? lifetime
   } )
-  // @ts-ignore
-  lifetimes.forEach( lifetime => provider.lifetimes[lifetime.name] = lifetime )
-  return ensureEmptyProvider( provider )
-}
-
-function ensureEmptyProvider<E>( provider: ServiceProvider<E> ) {
-  // @ts-ignore
-  Object.keys( provider.instances ).forEach( key => provider.instances[key] = false )
+  provider.instances = {}
   return provider
 }
 
-const provide = propertyOf<ILifetime<unknown, any>>().provide
+const { provide } = propertyOf<ILifetime<unknown, any>>()
 
 export function proxyLifetime<E>(
   lifetime: ILifetime<unknown, E>,

@@ -8,11 +8,12 @@ const proxyOf = <E>( self: ServiceProvider<E>, context?: ScopeContext<E> ) =>
   new Proxy( self, { get: ( t, p: Key<E> ) => t.provide( p, context ) } ) as unknown as E
 
 export class ServiceProvider<E = any> {
-  readonly instances: Partial<{ [key in keyof E]: any }> = {}
+  instances: Partial<{ [key in keyof E]: any }> = {}
   readonly proxy: E = proxyOf( this )
   private readonly verified: Partial<Record<Key<E>, true>> = {}
+  readonly lifetimes: LifetimeCollection<E>
 
-  constructor( readonly lifetimes: LifetimeCollection<E> ) {
+  constructor( lifetimes: LifetimeCollection<E> ) {
     this.lifetimes = lifetimes
   }
 
