@@ -3,7 +3,7 @@ import { ILifetime } from '../Lifetime'
 import { propertyOf } from '../utils'
 import { ServiceCollection } from './ServiceCollection'
 import { DependencyFactory, Key } from './types'
-import { Provider, ScopeContext, ServiceProvider } from '../ServiceProvider'
+import { DebugServiceProvider, Provider, ScopeContext } from '../ServiceProvider'
 
 export enum MockStrategy {
   /**
@@ -53,7 +53,7 @@ export function proxyLifetimes<E>(
   }
   const dependencyMock: ProviderMock<E> = typeof providerMock === 'string' ? {} : providerMock
 
-  const provider = services.build()
+  const provider = services.buildDebug()
 
   Object.values<ILifetime<unknown, E>>( provider.lifetimes ).map( ( lifetime ) => {
     const propertyMock = dependencyMock[lifetime.name] ?? defaultMock
@@ -62,7 +62,7 @@ export function proxyLifetimes<E>(
   } ).forEach( ( { lifetime, mock } ) => {
     provider.lifetimes[lifetime.name] = mock ?? lifetime
   } )
-  return new ServiceProvider( provider.lifetimes )
+  return new DebugServiceProvider( provider.lifetimes )
 }
 
 const { provide } = propertyOf<ILifetime<unknown, any>>()

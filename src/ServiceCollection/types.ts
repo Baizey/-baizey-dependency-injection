@@ -1,6 +1,5 @@
 import { ILifetime } from '../Lifetime'
-import { ScopeContext } from '../ServiceProvider'
-import { Provider } from '../ServiceProvider/Provider'
+import { Provider, ScopeContext } from '../ServiceProvider'
 
 export type Key<E> = keyof E & ( string )
 

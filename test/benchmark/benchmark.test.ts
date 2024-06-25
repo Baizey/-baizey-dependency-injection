@@ -1,5 +1,5 @@
 import { scoped, services, singleton, transient } from '../../src'
-import { TimeSpan } from 'sharp-time-span'
+import { Suite } from 'benchmark'
 
 describe( 'benchmark', () => {
   // Dont run outside of local
@@ -45,61 +45,50 @@ describe( 'benchmark', () => {
   const raw: { lifetime: ( a: any ) => any, raw: () => any }[] = [
     {
       lifetime: transient,
-      raw: () => benchmark( () => new D( {
+      raw: () => () => new D( {
         a: new A(),
         b: new B( { a: new A() } ),
         c: new C( { b: new B( { a: new A() } ) } ),
-      } ) ),
+      } ),
     },
     {
       lifetime: scoped,
-      raw: () => benchmark( () => {
+      raw: () => () => {
         const a = new A()
         const b = new B( { a } )
         const c = new C( { b } )
         return new D( { a, b, c } )
-      } ),
+      },
     },
     {
       lifetime: singleton,
       raw: () => {
+        let a: A | undefined
+        let b: B | undefined
+        let c: C | undefined
         let d: D | undefined
-        return benchmark( () => {
-          if ( d ) return d
-          const a = new A()
-          const b = new B( { a } )
-          const c = new C( { b } )
-          d = new D( { a, b, c } )
+        return () => {
+          if ( d !== undefined ) return d
+          a ??= new A()
+          b ??= new B( { a } )
+          c ??= new C( { b } )
+          d ??= new D( { a, b, c } )
           return d
-        } )
+        }
       },
     },
   ]
-  let a = true
-  if ( a )
-    raw.forEach( ( { lifetime, raw } ) => {
-      test( lifetime.name, () => {
-        const provider = services( {
-          a: lifetime( A ),
-          b: lifetime( B ),
-          c: lifetime( C ),
-          d: lifetime( D ),
-        } ).build()
-        const bestCase = raw()
-        const actualCase = benchmark( () => provider.provide( 'd' ) )
-        expect( actualCase ).toBeLessThan( 0 )
-      } )
+
+  raw.forEach( ( { lifetime, raw } ) => {
+    test( lifetime.name, () => {
+      const provider = services( { a: lifetime( A ), b: lifetime( B ), c: lifetime( C ), d: lifetime( D ) } ).build()
+      const debug = services( { a: lifetime( A ), b: lifetime( B ), c: lifetime( C ), d: lifetime( D ) } ).buildDebug()
+      new Suite()
+        .add( 'No DI', () => raw() )
+        .add( `prod ${ lifetime.name }`, () => provider.provide( 'd' ) )
+        .add( `dev ${ lifetime.name }`, () => debug.provide( 'd' ) )
+        .on( 'cycle', ( e: any ) => console.log( String( e.target ) ) )
+        .run( { async: false } )
     } )
-  else test( 'placeholder', () => expect( true ).toBeTruthy() )
+  } )
 } )
-
-function benchmark( action: () => void ) {
-  const runs = 1000000
-  let i = 0
-  const start = Date.now()
-  for ( ; i < runs; i++ ) action()
-  const end = Date.now()
-
-  const span = TimeSpan.between( start, end )
-  return ( span.millis * 1e6 ) / runs
-}

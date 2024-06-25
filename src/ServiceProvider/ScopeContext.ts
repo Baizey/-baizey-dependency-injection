@@ -6,6 +6,7 @@ export interface ScopeContext<E> {
   isEscaped: boolean
 
   readonly instances: Partial<{ [key in keyof E]: any }>
+  proxy?: E
 
   depth: number
   readonly lastSingleton: null | DependencyInfo<E>
