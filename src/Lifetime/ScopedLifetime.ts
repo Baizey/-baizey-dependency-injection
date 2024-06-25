@@ -14,6 +14,7 @@ export class ScopedLifetime<T, E> implements ILifetime<T, E> {
     this.factory = factory
   }
 
+
   provide( provider: Provider<E>, context: ScopeContext<E> ) {
     const { instances } = context
     if ( !( this.name in instances ) )
