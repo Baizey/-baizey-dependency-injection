@@ -5,12 +5,10 @@ import {
   ServiceCollection,
   ShouldBeMockedDependencyError,
   singleton,
-  stateful,
   transient,
 } from '../src'
 import { ScopedLifetime } from '../src/Lifetime/ScopedLifetime'
 import { SingletonLifetime } from '../src/Lifetime/SingletonLifetime'
-import { StatefulLifetime } from '../src/Lifetime/StatefulLifetime'
 import { TransientLifetime } from '../src/Lifetime/TransientLifetime'
 import { dummy, dummyClass, UUID } from './testUtils'
 
@@ -24,7 +22,6 @@ describe( 'constructor', () => {
     [singleton, SingletonLifetime],
     [scoped, ScopedLifetime],
     [transient, TransientLifetime],
-    [stateful, StatefulLifetime],
   ] as any[][]
   testData.forEach( ( [lifetime, expected] ) => {
     test( `add ${ lifetime.name }`, () => {
@@ -111,28 +108,6 @@ describe( services.buildMock, () => {
     expect( sut.a.id ).toBeNull()
     expect( () => sut.a.func() ).toThrowError( new ShouldBeMockedDependencyError( 'a', 'func', 'function' ) )
     expect( sut.getter ).toBeTruthy()
-  } )
-
-  test( 'Stateful instance should be given mocked dependencies', () => {
-    const sut = dummy( {
-      scoped: scoped( dummyClass( ( { stateful } ) => ( { stateful } ) ) ),
-      stateful: stateful( dummyClass( ( { stateful, scoped } ) => ( { stateful, scoped } ) ) ),
-    } )
-      .mock( MockStrategy.exceptionStub ).stateful
-    expect( () => sut.create().scoped.stateful ).toThrowError(
-      new ShouldBeMockedDependencyError( 'scoped', 'stateful', 'get' ),
-    )
-  } )
-
-  test( 'Service with Stateful dependency should be given mocked Stateful', () => {
-    const sut = dummy( {
-      scoped: scoped( dummyClass( ( { stateful } ) => ( { stateful } ) ) ),
-      stateful: stateful( dummyClass( ( { stateful, scoped } ) => ( { stateful, scoped } ) ) ),
-    } )
-      .mock( MockStrategy.exceptionStub ).scoped
-    expect( () => sut.stateful.create() ).toThrowError(
-      new ShouldBeMockedDependencyError( 'stateful', 'create', 'function' ),
-    )
   } )
 
   test( 'Service with MockStrategy realValue should return the real deal', () => {

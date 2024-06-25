@@ -12,11 +12,7 @@ export type MatchingProperties<T, E> = { [K in keyof E]: E[K] extends T ? K : ne
 export type SelectorOptions<T = any, E = any> = { [key in MatchingProperties<T, E>]: key & Key<E> }
 export type Selector<T, E> = Key<E> | ( ( e: SelectorOptions<T, E> ) => Key<E> )
 
-export type Stateful<P, T> = { create( props: P ): T }
-
 export type DependencyFactory<T, P, E> = ( providable: E, props: P, provider: ServiceProvider<E>, context: ScopeContext<E> ) => T
-
-export type StatefulConstructor<T, P, E> = { new( provider: E, props: P ): T }
 
 export type NormalConstructor<T, E> = { new( provider: E ): T } | { new(): T }
 

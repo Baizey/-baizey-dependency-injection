@@ -66,7 +66,6 @@ while D showcases how the different lifetime affect performance
 | Singleton |           6 |          15 |               3 |
 | Scoped    |         230 |        1930 |               4 |
 | Transient |         227 |        3133 |               2 |
-| Stateful  |          70 |         109 |              17 |
 
 # API
 
@@ -86,15 +85,11 @@ type MatchingProperties<T, E> = { [K in keyof E]: E[K] extends T ? K : never }[k
 type SelectorOptions<T = any, E = any> = { [key in MatchingProperties<T, E>]: key & Key<E> }
 type Selector<T, E> = Key<E> | (( e: SelectorOptions<T, E> ) => Key<E>)
 
-type Stateful<P, T> = { create( props: P ): T }
-
 type Factory<T, P, E> = ( provider: E, props: P, scope: ScopedServiceProvider<E> ) => T
 
 type LifetimeConstructor<T = any, P = void, E = any> =
 	{ new( name: Key<E>, factory: Factory<T, P, E> ): ILifetime<T, E> }
 	
-type StatefulConstructor<T, P, E> = { new( provider: E, props: P ): T }
-
 type NormalConstructor<T, E> = { new( provider: E ): T } | { new(): T }
 
 type FactoryOption<T, P, E> = { factory: Factory<T, P, E> }
@@ -193,7 +188,6 @@ Can throw
 - ``Singleton``, 1 to rule all
 - ``Scoped``, 1 per request
 - ``Transient``, always a new one
-- ``Stateful``, always a new one, returns `Stateful<P, T>` which is equivalent to `{ create(p: P) => T }`
 
 ### Provide
 

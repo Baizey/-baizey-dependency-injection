@@ -1,4 +1,4 @@
-import { scoped, services, singleton, stateful, transient } from '../../src'
+import { scoped, services, singleton, transient } from '../../src'
 import { TimeSpan } from 'sharp-time-span'
 
 describe( 'benchmark', () => {
@@ -58,15 +58,6 @@ describe( 'benchmark', () => {
         const b = new B( { a } )
         const c = new C( { b } )
         return new D( { a, b, c } )
-      } ),
-    },
-    {
-      lifetime: stateful,
-      raw: () => benchmark( () => {
-        const a = { create: () => new A() }
-        const b = { create: () => new B( { a } ) }
-        const c = { create: () => new C( { b } ) }
-        return { create: () => new D( { a, b, c } ) }
       } ),
     },
     {
