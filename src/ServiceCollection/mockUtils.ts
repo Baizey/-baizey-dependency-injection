@@ -86,7 +86,7 @@ export function proxyLifetime<E>(
           case 'string':
             return mockDependency( name, shadow, {}, dependencyMock )
           case 'function':
-            return mockDependency( name, shadow, dependencyMock( provider.createProxy( name as Key<E>, context ), undefined, provider, context ), defaultMock )
+            return mockDependency( name, shadow, dependencyMock( provider.createProxy( context ), undefined, provider, context ), defaultMock )
           case 'object':
             return mockDependency( name, shadow, dependencyMock, defaultMock )
           default:

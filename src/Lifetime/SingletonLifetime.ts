@@ -4,8 +4,9 @@ import { ScopeContext, ServiceProvider } from '../ServiceProvider'
 
 export class SingletonLifetime<T, E> implements ILifetime<T, E> {
   private readonly factory: DependencyFactory<T, void, E>
-  readonly isSingleton = true
+
   readonly name: Key<E>
+  readonly isSingleton = true
 
   constructor( name: Key<E>, factory: DependencyFactory<T, void, E> ) {
     this.name = name
@@ -13,10 +14,14 @@ export class SingletonLifetime<T, E> implements ILifetime<T, E> {
   }
 
   provide( provider: ServiceProvider<E>, context: ScopeContext<E> ) {
-    const instances = provider.instances
-    const proxy = provider.createProxy( this.name, context )
-    if ( !instances[this.name] ) instances[this.name] = this.factory( proxy, undefined, provider, context )
+    const { instances } = provider
+    if ( !( this.name in instances ) )
+      instances[this.name] = this.factory( provider.createProxy( context ), undefined, provider, context )
     return instances[this.name]
+  }
+
+  validate( provider: ServiceProvider<E>, context: ScopeContext<E> ) {
+    return this.provide( provider, context )
   }
 
   public clone(): ILifetime<T, E> {

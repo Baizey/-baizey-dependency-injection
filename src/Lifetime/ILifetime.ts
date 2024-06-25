@@ -3,12 +3,12 @@ import { ScopeContext, ServiceProvider } from '../ServiceProvider'
 
 export interface DependencyInfo<E = any> {
   readonly name: Key<E>,
-  readonly isSingleton?: boolean
+  readonly isSingleton: boolean
 }
 
 export interface ILifetime<T, E> extends DependencyInfo<E> {
   provide( provider: ServiceProvider<E>, context: ScopeContext<E> ): T
-
+  validate( provider: ServiceProvider<E>, context: ScopeContext<E> ): T
   clone(): ILifetime<T, E>
 }
 
@@ -26,8 +26,11 @@ export class Lifetime {
       provide() {
         return null
       },
+      validate() {
+        return null
+      },
       name,
-      isSingleton,
+      isSingleton: false,
     }
   }
 }

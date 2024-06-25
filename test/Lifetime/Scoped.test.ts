@@ -45,7 +45,7 @@ describe( SingletonScopedDependencyError.name, () => {
     const singleton = Lifetime( SingletonLifetime )
     const context = { lastSingleton: singleton } as any
     const sut = Lifetime( ScopedLifetime )
-    expect( () => sut.provide( Provider(), context ) )
-      .toThrowError( new SingletonScopedDependencyError( singleton.name, sut.name ) )
+    expect( () => sut.validate( Provider(), context ) )
+      .toThrow( new SingletonScopedDependencyError( singleton.name, sut.name ) )
   } )
 } )

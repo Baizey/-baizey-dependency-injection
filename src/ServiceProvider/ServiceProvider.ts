@@ -10,15 +10,13 @@ const proxyOf = <E>( self: ServiceProvider<E>, context?: ScopeContext<E> ) =>
 export class ServiceProvider<E = any> {
   instances: Partial<{ [key in keyof E]: any }> = {}
   readonly proxy: E = proxyOf( this )
-  private readonly verified: Partial<Record<Key<E>, true>> = {}
   readonly lifetimes: LifetimeCollection<E>
 
   constructor( lifetimes: LifetimeCollection<E> ) {
     this.lifetimes = lifetimes
   }
 
-  createProxy( key: Key<E>, context?: ScopeContext<E> ): E {
-    if ( this.verified[key] && !context ) return this.proxy
+  createProxy( context?: ScopeContext<E> ): E {
     return proxyOf<E>( this, context )
   }
 
@@ -38,7 +36,6 @@ export class ServiceProvider<E = any> {
 
   enterLifetime<T>( key: Key<E>, currentContext?: ScopeContext<E>, lifetime?: ILifetime<T, E> ): ScopeContext<E> {
     if ( !currentContext ) currentContext = this.createContext( true )
-    if ( this.verified[key] ) return currentContext
 
     if ( !lifetime ) throw new ExistenceDependencyError( key )
     if ( lifetime.name in currentContext.lookup ) {

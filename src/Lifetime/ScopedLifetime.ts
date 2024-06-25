@@ -7,6 +7,7 @@ export class ScopedLifetime<T, E> implements ILifetime<T, E> {
   private readonly factory: DependencyFactory<T, void, E>
 
   readonly name: Key<E>
+  readonly isSingleton = false
 
   constructor( name: Key<E>, factory: DependencyFactory<T, void, E> ) {
     this.name = name
@@ -14,10 +15,16 @@ export class ScopedLifetime<T, E> implements ILifetime<T, E> {
   }
 
   provide( provider: ServiceProvider<E>, context: ScopeContext<E> ) {
-    const { lastSingleton, instances } = context
-    if ( lastSingleton ) throw new SingletonScopedDependencyError( lastSingleton.name, this.name )
-    if ( !instances[this.name] ) instances[this.name] = this.factory( provider.createProxy( this.name, context ), undefined, provider, context )
+    const { instances } = context
+    if ( !( this.name in instances ) )
+      instances[this.name] = this.factory( provider.createProxy( context ), undefined, provider, context )
     return instances[this.name]
+  }
+
+  validate( provider: ServiceProvider<E>, context: ScopeContext<E> ) {
+    const { lastSingleton } = context
+    if ( lastSingleton ) throw new SingletonScopedDependencyError( lastSingleton.name, this.name )
+    return this.provide( provider, context )
   }
 
   public clone(): ILifetime<T, E> {
