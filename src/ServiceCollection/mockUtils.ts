@@ -3,7 +3,7 @@ import { ILifetime } from '../Lifetime'
 import { propertyOf } from '../utils'
 import { ServiceCollection } from './ServiceCollection'
 import { DependencyFactory, Key } from './types'
-import { ScopeContext, ServiceProvider } from '../ServiceProvider'
+import { Provider, ScopeContext, ServiceProvider } from '../ServiceProvider'
 
 export enum MockStrategy {
   /**
@@ -62,8 +62,7 @@ export function proxyLifetimes<E>(
   } ).forEach( ( { lifetime, mock } ) => {
     provider.lifetimes[lifetime.name] = mock ?? lifetime
   } )
-  provider.instances = {}
-  return provider
+  return new ServiceProvider( provider.lifetimes )
 }
 
 const { provide } = propertyOf<ILifetime<unknown, any>>()
@@ -77,7 +76,7 @@ export function proxyLifetime<E>(
   return new Proxy( lifetime, {
     get( target, prop: keyof ILifetime<unknown, E> ) {
       if ( prop !== provide ) return target[prop]
-      return ( provider: ServiceProvider<E>, context: ScopeContext<E> ) => {
+      return ( provider: Provider<E>, context: ScopeContext<E> ) => {
         if ( context.depth === 1 ) return target.provide( provider, context )
 
         const shadow = target.provide( provider, context )

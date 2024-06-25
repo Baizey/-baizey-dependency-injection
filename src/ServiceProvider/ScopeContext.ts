@@ -7,7 +7,7 @@ export interface ScopeContext<E> {
 
   readonly instances: Partial<{ [key in keyof E]: any }>
 
-  readonly depth: number
+  depth: number
   readonly lastSingleton: null | DependencyInfo<E>
 
   readonly lookup: Record<Key<any>, DependencyInfo>

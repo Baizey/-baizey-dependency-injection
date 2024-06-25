@@ -1,5 +1,6 @@
 import { ILifetime } from '../Lifetime'
-import { ScopeContext, ServiceProvider } from '../ServiceProvider'
+import { ScopeContext } from '../ServiceProvider'
+import { Provider } from '../ServiceProvider/Provider'
 
 export type Key<E> = keyof E & ( string )
 
@@ -12,7 +13,7 @@ export type MatchingProperties<T, E> = { [K in keyof E]: E[K] extends T ? K : ne
 export type SelectorOptions<T = any, E = any> = { [key in MatchingProperties<T, E>]: key & Key<E> }
 export type Selector<T, E> = Key<E> | ( ( e: SelectorOptions<T, E> ) => Key<E> )
 
-export type DependencyFactory<T, P, E> = ( providable: E, props: P, provider: ServiceProvider<E>, context: ScopeContext<E> ) => T
+export type DependencyFactory<T, P, E> = ( providable: E, props: P, provider: Provider<E>, context: ScopeContext<E> ) => T
 
 export type NormalConstructor<T, E> = { new( provider: E ): T } | { new(): T }
 

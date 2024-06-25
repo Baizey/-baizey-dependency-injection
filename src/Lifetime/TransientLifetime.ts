@@ -1,6 +1,6 @@
 import { DependencyFactory, DependencyInformation, FactoryOption, Key, NormalConstructor } from '../ServiceCollection'
 import { ILifetime } from './ILifetime'
-import { ScopeContext, ServiceProvider } from '../ServiceProvider'
+import { ScopeContext, Provider } from '../ServiceProvider'
 
 export class TransientLifetime<T, E> implements ILifetime<T, E> {
   private readonly factory: DependencyFactory<T, void, E>
@@ -13,11 +13,11 @@ export class TransientLifetime<T, E> implements ILifetime<T, E> {
     this.factory = factory
   }
 
-  provide( provider: ServiceProvider<E>, context: ScopeContext<E> ) {
+  provide( provider: Provider<E>, context: ScopeContext<E> ) {
     return this.factory( provider.createProxy( context ), undefined, provider, context )
   }
 
-  validate( provider: ServiceProvider<E>, context: ScopeContext<E> ) {
+  validate( provider: Provider<E>, context: ScopeContext<E> ) {
     return this.provide( provider, context )
   }
 

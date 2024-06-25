@@ -8,7 +8,7 @@ import {
   ProviderMock,
   ScopeContext,
   ServiceCollection,
-  ServiceProvider,
+  DebugServiceProvider,
 } from '../src'
 
 export const propertyOfLifetime = propertyOf<ILifetime<any, any>>()
@@ -31,7 +31,7 @@ export const UUID = {
 export const Lifetime = ( Constructor: LifetimeConstructor ) =>
   new Constructor( UUID.randomUUID(), () => UUID.randomUUID() )
 
-export const Provider = () => new ServiceProvider( {} )
+export const Provider = () => new DebugServiceProvider( {} )
 export const Context = <E = any>(): ScopeContext<E> => ( {
   instances: {},
   isEscaped: false,

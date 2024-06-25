@@ -1,7 +1,7 @@
 import { SingletonScopedDependencyError } from '../Errors'
 import { DependencyFactory, DependencyInformation, FactoryOption, Key, NormalConstructor } from '../ServiceCollection'
 import { ILifetime } from './ILifetime'
-import { ScopeContext, ServiceProvider } from '../ServiceProvider'
+import { ScopeContext, Provider } from '../ServiceProvider'
 
 export class ScopedLifetime<T, E> implements ILifetime<T, E> {
   private readonly factory: DependencyFactory<T, void, E>
@@ -14,14 +14,14 @@ export class ScopedLifetime<T, E> implements ILifetime<T, E> {
     this.factory = factory
   }
 
-  provide( provider: ServiceProvider<E>, context: ScopeContext<E> ) {
+  provide( provider: Provider<E>, context: ScopeContext<E> ) {
     const { instances } = context
     if ( !( this.name in instances ) )
       instances[this.name] = this.factory( provider.createProxy( context ), undefined, provider, context )
     return instances[this.name]
   }
 
-  validate( provider: ServiceProvider<E>, context: ScopeContext<E> ) {
+  validate( provider: Provider<E>, context: ScopeContext<E> ) {
     const { lastSingleton } = context
     if ( lastSingleton ) throw new SingletonScopedDependencyError( lastSingleton.name, this.name )
     return this.provide( provider, context )
