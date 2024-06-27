@@ -47,25 +47,24 @@ export function proxyLifetimes<E>(
   services: ServiceCollection<E>,
   providerMock: MockStrategy | ProviderMock<E>,
   defaultMock: MockStrategy = MockStrategy.nullStub,
-) {
+): Provider<E> {
   if ( typeof providerMock === 'string' ) {
     defaultMock = providerMock as MockStrategy
   }
   const dependencyMock: ProviderMock<E> = typeof providerMock === 'string' ? {} : providerMock
 
   const provider = services.buildDebug()
-
-  Object.values<ILifetime<unknown, E>>( provider.lifetimes ).map( ( lifetime ) => {
+  const lifetimes = Object.values<ILifetime<unknown, E>>( provider.lifetimes ).map( ( lifetime ) => {
     const propertyMock = dependencyMock[lifetime.name] ?? defaultMock
-    if ( propertyMock === MockStrategy.realValue ) return { lifetime, mock: null }
-    return { lifetime, mock: proxyLifetime( lifetime, propertyMock, defaultMock ) }
-  } ).forEach( ( { lifetime, mock } ) => {
-    provider.lifetimes[lifetime.name] = mock ?? lifetime
-  } )
-  return new DebugServiceProvider( provider.lifetimes )
+    return proxyLifetime( lifetime, propertyMock, defaultMock )
+  } ).reduce( ( a, b ) => {
+    a[b.name] = b
+    return a
+  }, {} as any )
+  return new DebugServiceProvider( lifetimes )
 }
 
-const { provide } = propertyOf<ILifetime<unknown, any>>()
+const { provide, validate } = propertyOf<ILifetime<unknown, any>>()
 
 export function proxyLifetime<E>(
   lifetime: ILifetime<unknown, E>,
@@ -75,22 +74,27 @@ export function proxyLifetime<E>(
   const name = lifetime.name.toString()
   return new Proxy( lifetime, {
     get( target, prop: keyof ILifetime<unknown, E> ) {
-      if ( prop !== provide ) return target[prop]
+      if ( prop !== provide && prop !== validate ) return target[prop]
       return ( provider: Provider<E>, context: ScopeContext<E> ) => {
-        if ( context.depth === 1 ) return target.provide( provider, context )
-
         const shadow = target.provide( provider, context )
-
+        let mock: typeof shadow
         switch ( typeof dependencyMock ) {
           case 'string':
-            return mockDependency( name, shadow, {}, dependencyMock )
+            mock = mockDependency( name, shadow, {}, dependencyMock )
+            break
           case 'function':
-            return mockDependency( name, shadow, dependencyMock( provider.createProxy( context ), undefined, provider, context ), defaultMock )
+            mock = mockDependency( name, shadow, dependencyMock( provider.createProxy( context ), undefined, provider, context ), defaultMock )
+            break
           case 'object':
-            return mockDependency( name, shadow, dependencyMock, defaultMock )
+            mock = mockDependency( name, shadow, dependencyMock, defaultMock )
+            break
           default:
-            return mockDependency( name, shadow, {}, defaultMock )
+            mock = mockDependency( name, shadow, {}, defaultMock )
+            break
         }
+        if ( name in provider.instances ) provider.instances[name as keyof E] = mock
+        if ( name in context.instances ) context.instances[name as keyof E] = mock
+        return mock
       }
     },
   } )
