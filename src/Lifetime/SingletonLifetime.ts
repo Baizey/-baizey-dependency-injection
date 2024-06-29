@@ -3,7 +3,7 @@ import { ILifetime } from './ILifetime'
 import { ScopeContext, Provider } from '../ServiceProvider'
 
 export class SingletonLifetime<T, E> implements ILifetime<T, E> {
-  private readonly factory: DependencyFactory<T, void, E>
+  readonly factory: DependencyFactory<T, void, E>
 
   readonly name: Key<E>
   readonly isSingleton = true

@@ -3,7 +3,6 @@ import {
   DependencyMap,
   ILifetime,
   LifetimeConstructor,
-  MockStrategy,
   propertyOf,
   ProviderMock,
   ScopeContext,
@@ -89,10 +88,9 @@ class Dummy<E = {}> {
     return this.services.build().proxy
   }
 
-  public mock( mock: MockStrategy | ProviderMock<Recursive<E>> = {},
-               defaultMock?: MockStrategy ): Recursive<E> {
+  public mock( mock: ProviderMock<Recursive<E>> = {}): Recursive<E> {
     // @ts-ignore
-    return this.services.buildMock( mock, defaultMock ).proxy
+    return this.services.buildMock( mock ).proxy
   }
 }
 

@@ -1,6 +1,6 @@
 import { ILifetime } from '../Lifetime'
 import { extractSelector } from '../utils'
-import { MockStrategy, ProviderMock, proxyLifetimes } from './mockUtils'
+import { ProviderMock, proxyLifetimes } from './mockUtils'
 import { DependencyInformation, DependencyMap, LifetimeCollection, Selector } from './types'
 import { DebugServiceProvider, Provider, ServiceProvider } from '../ServiceProvider'
 
@@ -57,8 +57,8 @@ export class ServiceCollection<E = {}> {
     return new DebugServiceProvider<E>( lifetimes )
   }
 
-  buildMock( mock: MockStrategy | ProviderMock<E> = {}, defaultMockType?: MockStrategy ): Provider<E> {
-    return proxyLifetimes( this, mock, defaultMockType )
+  buildMock( mock: ProviderMock<E> = {} ): Provider<E> {
+    return proxyLifetimes( this, mock )
   }
 }
 

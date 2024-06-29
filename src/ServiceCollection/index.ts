@@ -1,3 +1,3 @@
 export * from './ServiceCollection'
 export * from './types'
-export { MockStrategy, ProviderMock } from './mockUtils'
+export { ProviderMock } from './mockUtils'
